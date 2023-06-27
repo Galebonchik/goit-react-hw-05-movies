@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useSearchParams } from 'react-router-dom';
+
 import { Loader } from 'components/Loader/Loader';
 import { EditorList } from 'pages/EditorList/EditorList';
 import { Form } from 'components/Form/Form';
@@ -9,20 +11,31 @@ export default function Movies() {
   const [loading, setLoading] = useState(false);
   const [noMoviesText, setNoMoviesText] = useState(false);
 
-  const searchMovies = queryMovie => {
-    setLoading(true);
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-    fetchSearchByKeyword(queryMovie)
-      .then(searchResults => {
-        setSearchFilms(searchResults);
-        setNoMoviesText(searchResults.length === 0);
-      })
-      .catch(error => {
-        console.log(error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+  useEffect(() => {
+    const queryMovie = searchParams.get('query');
+
+    if (queryMovie) {
+      setLoading(true);
+
+      fetchSearchByKeyword(queryMovie)
+        .then(searchResults => {
+          setSearchFilms(searchResults);
+          setNoMoviesText(searchResults.length === 0);
+        })
+        .catch(error => {
+          console.log(error);
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  }, [location, searchParams]);
+
+  const searchMovies = queryMovie => {
+    setSearchParams({ query: queryMovie });
   };
 
   return (
@@ -30,7 +43,7 @@ export default function Movies() {
       <Form searchMovies={searchMovies} />
       {loading && <Loader />}
       {noMoviesText && (
-        <p>There is no movies with this request. Please, try again</p>
+        <p>There are no movies with this request. Please, try again</p>
       )}
       {searchFilms && <EditorList films={searchFilms} />}
     </main>
